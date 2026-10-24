@@ -658,32 +658,34 @@ onBeforeUnmount(() => {
 .expression-autocomplete {
   position: relative;
   width: 100%;
+  min-width: 0; /* 关键：作为 flex 子项时允许收缩，否则会把兄弟元素挤出容器 */
 }
 
 .expression-label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
+  margin-bottom: 4px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-color);
 }
 
 .expression-input {
   width: 100%;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 4px 8px;
+  font-size: 13px;
   font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-  border: 1.5px solid var(--border-color);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   background: var(--background-color);
   color: var(--text-color);
+  box-sizing: border-box;
 }
 
 .expression-input:focus {
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
   background: var(--highlight-color);
 }
 
@@ -695,13 +697,13 @@ onBeforeUnmount(() => {
   background: var(--background-color);
   color: var(--text-color);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  max-height: 260px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  max-height: 220px;
   overflow-y: auto;
   list-style: none;
-  padding: 4px 0;
-  margin: 4px 0 0 0;
+  padding: 2px 0;
+  margin: 2px 0 0 0;
   z-index: 30000;
 }
 
@@ -714,12 +716,12 @@ onBeforeUnmount(() => {
    菜单项样式
    ============================================================ */
 .tribute-item {
-  padding: 8px 14px;
+  padding: 3px 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
+  gap: 8px;
+  font-size: 12px;
   transition: background 0.15s;
 }
 
@@ -738,7 +740,7 @@ onBeforeUnmount(() => {
 .tribute-item-desc {
   color: var(--text-color);
   opacity: 0.6;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 /* 属性补全项 — 绿色 */
@@ -753,10 +755,10 @@ onBeforeUnmount(() => {
 
 /* 无匹配提示 */
 .tribute-no-match {
-  padding: 10px 14px;
+  padding: 4px 8px;
   color: var(--text-color);
   opacity: 0.6;
-  font-size: 13px;
+  font-size: 12px;
   display: block;
 }
 
