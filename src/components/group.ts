@@ -20,8 +20,8 @@ export interface Task {
   modifiedIcon: string|null;
 }
 // 类型定义
-interface CaptureCondition {
-  type: 'pwd' | 'name' | 'originName';
+export interface CaptureCondition {
+  type: 'expression';
   value: string;
 }
 export interface editableGroup{

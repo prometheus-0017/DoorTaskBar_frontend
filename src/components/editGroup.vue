@@ -22,16 +22,11 @@
       </div>
       <div style="max-height: 200px;overflow:auto">
           <div v-for="(item, index) in formData.captureConditions" :key="index" class="list-item">
-            <select v-model="item.type" class="form-select">
-              <option value="pwd">pwd</option>
-              <option value="name">name</option>
-              <option value="originName">originName</option>
-            </select>
-            <input 
-              v-model="item.value" 
-              type="text" 
-              class="form-input" 
-              placeholder="值"
+            <input-complete
+              v-model="item.value"
+              :property-list="['pwd', 'name', 'originName']"
+              placeholder="item.name=='xxx' && item.pwd=='/opt'"
+              style="flex:1;min-width:0"
             />
             <text-button 
               tooltip="删除"
@@ -56,6 +51,7 @@
 <script setup lang="ts">
 import { onMounted, ref, type Ref } from 'vue';
 import TextButton from './TextButton.vue';
+import InputComplete from './inputComplete.vue';
 
 
 import { type editableGroup as EditableGroup } from './group';
@@ -78,7 +74,7 @@ const formData = ref<EditableGroup>({
   name: props.initialData?.name || '',
   captureConditions: props.initialData?.captureConditions?.length 
     ? JSON.parse(JSON.stringify(props.initialData.captureConditions)) 
-    : [{ type: 'name', value: '' }]
+    : [{ type: 'expression', value: '' }]
 });
 
 // 方法
@@ -93,12 +89,15 @@ const submit = () => {
 };
 
 const addItem = () => {
-  formData.value.captureConditions.push({ type: 'name', value: '' });
+  formData.value.captureConditions.push({ type: 'expression', value: '' });
 };
+
 onMounted(()=>{
   formData.value={
     name: props.initialData?.name || '',
-    captureConditions: JSON.parse(JSON.stringify(props.initialData!.captureConditions||[]))
+    captureConditions: props.initialData?.captureConditions?.length
+      ? JSON.parse(JSON.stringify(props.initialData.captureConditions))
+      : [{ type: 'expression', value: '' }]
   }
   input.value?.focus()
 

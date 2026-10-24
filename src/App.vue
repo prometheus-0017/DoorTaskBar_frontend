@@ -487,6 +487,13 @@ async function saveStatus(){
   saveFinSign.value='√'
   saveInterval=setInterval(()=>saveFinSign.value='存',500)
 }
+async function softSave(){
+  let status={
+    config:config,
+    taskLists:groups.value
+  }
+  await rpc.softSave(status)
+}
 let globalQuery=computed(()=>{
   return config.globalQuery
 })
@@ -628,7 +635,8 @@ onMounted(async () => {
   }
   ready.value=true
 
-  
+  // 每5分钟软保存
+  setInterval(softSave, 5 * 60 * 1000)
 
   // setInterval(refresh,500)
 
