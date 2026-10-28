@@ -381,6 +381,116 @@ function mkFullId(id:taskId,sys:string):fullId{
   return `${sys}%${id}`
 }
 let taskMap:Map<fullId,Task>=new Map()
+
+// 匹配 task 与 group 的捕获规则，返回第一条命中的规则索引，无命中返回 -1
+function matchCaptureRule(task:Task,group:Group):number{
+  const conditions=group.captureConditions||[]
+  for(let i=0;i<conditions.length;i++){
+    const condition=conditions[i]
+    let val=null
+    if(condition.type=='name'){
+      //todo 你他妈的远程哪有modify？
+      val=task.modifiedName
+    }else if(condition.type=='originName'){
+      val=task.originalName
+    }else if(condition.type=='pwd'){
+      val=task.pwd
+    }else{
+      console.warn('未知的condition.type')
+    }
+    if(val!=null &&
+        condition.value!='' &&
+        val.toLowerCase().includes(condition.value.toLowerCase())){
+      return i
+    }
+  }
+  return -1
+}
+
+// 计算按捕获规则顺序对齐后的插入位置：
+// 对组内任务的规则归属序列与规则索引序列[0..n-1]求最长公共子序列(LCS)建立映射，
+// 一条规则可能连续对应一组任务，新条目应插到该组最后一个匹配任务之后；
+// 该规则没有匹配时，插到前一条有匹配规则的对应位置之后；
+// 之前也没有匹配时，插到后一条有匹配规则的连续段之前；全无匹配时退化为追加到末尾
+function findCaptureInsertPos(group:Group,ruleIdx:number):number{
+  const n=(group.captureConditions||[]).length
+  const tasks=group.tasks
+  const m=tasks.length
+  const capIdx=group.captureIndex||{}
+  const A=tasks.map(t=>{
+    const idx=capIdx[mkFullId(t.id,t.system)]
+    return (typeof idx=='number'&&idx>=0&&idx<n)?idx:-1
+  })
+  // matchRule[q]: 规则 q 在 A 中的 LCS 匹配点，-1 表示无匹配
+  const matchRule:number[]=new Array(n).fill(-1)
+  if(n>0&&m>0){
+    const dp:number[][]=Array.from({length:m+1},():number[]=>new Array(n+1).fill(0))
+    for(let i=1;i<=m;i++){
+      for(let j=1;j<=n;j++){
+        if(A[i-1]==j-1){
+          dp[i][j]=dp[i-1][j-1]+1
+        }else{
+          dp[i][j]=Math.max(dp[i-1][j],dp[i][j-1])
+        }
+      }
+    }
+    let i=m,j=n
+    while(i>0&&j>0){
+      if(A[i-1]==j-1){
+        matchRule[j-1]=i-1
+        i--;j--
+      }else if(dp[i-1][j]>=dp[i][j-1]){
+        i--
+      }else{
+        j--
+      }
+    }
+  }
+  // 匹配点向两侧扩展成连续段：一条规则连续对应的一组任务
+  const segStart:number[]=new Array(n).fill(-1)
+  const segEnd:number[]=new Array(n).fill(-1)
+  for(let q=0;q<n;q++){
+    const p=matchRule[q]
+    if(p<0){continue}
+    let lo=p,hi=p
+    while(lo>0&&A[lo-1]==q){lo--}
+    while(hi<m-1&&A[hi+1]==q){hi++}
+    segStart[q]=lo
+    segEnd[q]=hi
+  }
+  if(segEnd[ruleIdx]>=0){
+    return segEnd[ruleIdx]+1
+  }
+  for(let q=ruleIdx-1;q>=0;q--){
+    if(segEnd[q]>=0){
+      return segEnd[q]+1
+    }
+  }
+  for(let q=ruleIdx+1;q<n;q++){
+    if(segStart[q]>=0){
+      return segStart[q]
+    }
+  }
+  return tasks.length
+}
+
+// 把 task 捕获进 group：已在组内则跳过，命中规则时按规则对齐位置插入并记录归属
+function captureIntoGroup(task:Task,group:Group){
+  const fullId=mkFullId(task.id,task.system)
+  for(let t of group.tasks){
+    if(mkFullId(t.id,t.system)==fullId){
+      return
+    }
+  }
+  const ruleIdx=matchCaptureRule(task,group)
+  if(ruleIdx<0){
+    return
+  }
+  const capIdx=group.captureIndex||(group.captureIndex={})
+  const pos=findCaptureInsertPos(group,ruleIdx)
+  group.tasks.splice(pos,0,task)
+  capIdx[fullId]=ruleIdx
+}
 // async function sleep(ms:number){
 //   return new Promise(resolve=>{
 //     setTimeout(resolve,ms)
@@ -653,26 +763,8 @@ onMounted(async () => {
               if(group.id=='main'){
                 continue
               }
-              for(let condition of group.captureConditions||[]){
-                let val=null
-                if(condition.type=='name'){
-                  //todo 你他妈的远程哪有modify？
-                  val=updateInfo.data.modifiedName
-                }else if(condition.type=='originName'){
-                  val=updateInfo.data.originalName
-                }else if(condition.type=='pwd'){
-                  val=updateInfo.data.pwd
-                }else{
-                  console.warn('未知的condition.type')
-                }
-                if(val!=null && 
-                    condition.value!='' &&
-                    val.toLowerCase().includes(condition.value.toLowerCase())){
-                  group.tasks.push(updateInfo.data)
-                  break;
-                }
-              }
-
+              // 新增窗口时按捕获规则对齐位置插入（内部已去重）
+              captureIntoGroup(updateInfo.data,group)
             }
             for(let group of groups.value){
               if(group.id==currentTaskListShowing.value){
@@ -698,6 +790,16 @@ onMounted(async () => {
             }else{
               task.originalName=item.originalName
               task.originalIcon=item.originalIcon
+              if(item.pwd!=null){
+                task.pwd=item.pwd
+              }
+              // 数值变动时重新评估捕获规则，让变动后符合规则的窗口也能被捕获进组（已在组内的不重复）
+              for(let group of groups.value){
+                if(group.id=='main'){
+                  continue
+                }
+                captureIntoGroup(task,group)
+              }
             }
             break
           case 'delete':
@@ -706,9 +808,16 @@ onMounted(async () => {
             break
         }
       }
-      let removed=updateInfos.filter(x=>x.type=='delete').map(x=>x.data).map(x=>x.id)
+      let removed=updateInfos.filter(x=>x.type=='delete').map(x=>x.data)
+      let removedIds=removed.map(x=>x.id)
+      let removedFullIds=removed.map(x=>mkFullId(x.id,x.system))
       groups.value.forEach(tag=>{
-        tag.tasks=tag.tasks.filter(originItem=>removed.includes(originItem.id)==false)
+        tag.tasks=tag.tasks.filter(originItem=>removedIds.includes(originItem.id)==false)
+        if(tag.captureIndex){
+          for(let fid of removedFullIds){
+            delete tag.captureIndex[fid]
+          }
+        }
       })
       return '';// 返回undef不应该出发这么傻逼的报错
     })

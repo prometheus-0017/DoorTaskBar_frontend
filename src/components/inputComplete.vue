@@ -48,9 +48,19 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   label: '',
-  placeholder: "item.name=='chrome' && item.path='/opt'",
+  placeholder: "item.processName=='chrome' && item.pwd=='/home'",
   modelValue: '',
-  propertyList: () => ['name', 'path', 'version', 'size', 'type', 'status', 'owner'],
+  propertyList: () => [
+    'id',
+    'system',
+    'pwd',
+    'processId',
+    'processName',
+    'originalName',
+    'modifiedName',
+    'originalIcon',
+    'modifiedIcon',
+  ],
   computeLiterals: null,
   debug: false,
 })
@@ -98,14 +108,17 @@ const contextInfo = ref<ContextInfo>({
 // ============================================================
 const defaultComputeLiterals = async (propertyName: string): Promise<string[]> => {
   // 模拟异步获取，实际可替换为 API 请求
+  // 字段对齐 Task 接口（见 group.ts）
   const literalMap: Record<string, string[]> = {
-    name: ['chrome', 'firefox', 'safari', 'edge', 'opera'],
-    path: ['/opt', '/usr/local', '/home', '/var/log', '/etc'],
-    version: ['1.0', '2.0', '3.0', 'latest', 'beta'],
-    size: ['small', 'medium', 'large'],
-    type: ['application', 'library', 'tool', 'plugin'],
-    status: ['active', 'inactive', 'deprecated', 'experimental'],
-    owner: ['admin', 'root', 'user', 'system'],
+    system: ['windows', 'linux', 'macos'],
+    pwd: ['/home', '/usr/local', '/opt', 'C:\\Users', 'C:\\Program Files'],
+    processId: ['1000', '2000', '3000'],
+    processName: ['chrome', 'firefox', 'code', 'node', 'explorer'],
+    originalName: ['chrome', 'firefox', 'code', 'node', 'explorer'],
+    modifiedName: ['null', 'my-chrome', 'my-firefox'],
+    originalIcon: ['default', 'custom'],
+    modifiedIcon: ['null', 'custom-icon'],
+    id: ['1', '2', '3'],
   }
   return literalMap[propertyName] || []
 }
