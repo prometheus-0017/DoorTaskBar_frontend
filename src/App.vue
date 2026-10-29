@@ -275,6 +275,30 @@ async function handleKeyDown(e: KeyboardEvent) {
     currentTaskListShowing.value=list[(idx-1+list.length)%list.length].id
     list.splice(idx,1)
   }
+  // 复制当前组（Ctrl+D）：复制名称/捕获规则/任务列表，新组插到原组后面并切换过去
+  if(e.key=='d' && e.ctrlKey){
+    e.preventDefault()
+    if(currentTaskListShowing.value=='main'){
+      return
+    }
+    const idx=groups.value.findIndex(item=>item.id==currentTaskListShowing.value)
+    if(idx===-1){
+      return
+    }
+    const src=groups.value[idx]
+    // tasks 只浅拷贝数组，task 对象保持与 taskMap 相同的引用；规则和归属索引需要独立副本
+    const copy:Group={
+      id:getId(),
+      name:src.name+'副本',
+      tasks:[...src.tasks],
+      searchQuery:'',
+      scrollStatus:0,
+      captureConditions:JSON.parse(JSON.stringify(src.captureConditions||[])),
+      captureIndex:JSON.parse(JSON.stringify(src.captureIndex||{}))
+    }
+    groups.value.splice(idx+1,0,copy)
+    onTagClick(copy)
+  }
   if (e.key === 'F2') {
     
     if(currentItemClicked.value==null){
