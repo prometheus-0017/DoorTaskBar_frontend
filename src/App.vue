@@ -388,7 +388,19 @@ function matchCaptureRule(task:Task,group:Group):number{
   for(let i=0;i<conditions.length;i++){
     const condition=conditions[i]
     let val=null
-    if(condition.type=='name'){
+    if(condition.type=='expression'){
+      try{
+        let f = new Function('item', 'include', 'return (' + condition.value + ')')//不安全
+        const evalTarget = { ...task, name: task.modifiedName || task.originalName }
+        const include = (s: string, sub: string) => s?.toLowerCase().includes(sub?.toLowerCase())
+        if(f(evalTarget, include)){
+          return i
+        }
+      }catch(e){//todo 这么写实际上根本不会暴露出来
+        console.error(e)
+        continue
+      }
+    }else if(condition.type=='name'){
       //todo 你他妈的远程哪有modify？
       val=task.modifiedName
     }else if(condition.type=='originName'){

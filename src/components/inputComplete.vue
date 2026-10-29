@@ -1,4 +1,4 @@
-<!-- ExpressionAutocomplete.vue -->
+<!-- InputComplete.vue -->
 <template>
   <div class="expression-autocomplete">
     <label v-if="label" class="expression-label">{{ label }}</label>
