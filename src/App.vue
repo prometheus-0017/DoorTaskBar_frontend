@@ -412,12 +412,14 @@ function matchCaptureRule(task:Task,group:Group):number{
   for(let i=0;i<conditions.length;i++){
     const condition=conditions[i]
     let val=null
+    //第i条条件,类型为expression时候,走此分支
     if(condition.type=='expression'){
       try{
-        let f = new Function('item', 'include', 'return (' + condition.value + ')')//不安全
+        let f = new Function('item', 'include','key', 'return (' + condition.value + ')')//不安全
         const evalTarget = { ...task, name: task.modifiedName || task.originalName }
         const include = (s: string, sub: string) => s?.toLowerCase().includes(sub?.toLowerCase())
-        if(f(evalTarget, include)){
+        const key=(testStr:string)=>include(evalTarget.name,testStr)||include(evalTarget.processName,testStr)
+        if(f(evalTarget, include,key)){
           return i
         }
       }catch(e){//todo 这么写实际上根本不会暴露出来

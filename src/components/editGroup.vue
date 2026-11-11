@@ -24,7 +24,7 @@
           <div v-for="(item, index) in formData.captureConditions" :key="index" class="list-item">
             <input-complete
               v-model="item.value"
-              placeholder="include(name,'xxx') && pwd=='/opt'"
+              placeholder="key('xxx') && pwd=='/opt'"
               style="flex:1;min-width:0"
             />
             <text-button 
