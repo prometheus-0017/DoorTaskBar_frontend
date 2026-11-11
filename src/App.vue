@@ -415,8 +415,11 @@ function matchCaptureRule(task:Task,group:Group):number{
     //第i条条件,类型为expression时候,走此分支
     if(condition.type=='expression'){
       try{
-        let f = new Function('item', 'include','key', 'return (' + condition.value + ')')//不安全
+
+        const expression=condition.value
         const evalTarget = { ...task, name: task.modifiedName || task.originalName }
+
+        let f = new Function('item', 'include','key', 'return (' + expression + ')')//不安全
         const include = (s: string, sub: string) => s?.toLowerCase().includes(sub?.toLowerCase())
         const key=(testStr:string)=>include(evalTarget.name,testStr)||include(evalTarget.processName,testStr)
         if(f(evalTarget, include,key)){
