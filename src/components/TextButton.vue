@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { config } from './config'
-
-let props=defineProps({
+defineProps({
   tooltip: {
     type: String,
     default: undefined
