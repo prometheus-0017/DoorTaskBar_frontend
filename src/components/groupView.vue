@@ -79,7 +79,8 @@ const splitMove = (e: MouseEvent) => {
   }
   const rect = body.getBoundingClientRect()
   const min = MIN_PX / rect.height
-  g.subRatio = Math.min(Math.max((e.clientY - rect.top) / rect.height, min), 1 - min)
+  // 光标以下才是下级区域，所以按 rect.bottom 取距离
+  g.subRatio = Math.min(Math.max((rect.bottom - e.clientY) / rect.height, min), 1 - min)
 }
 const splitEnd = () => {
   document.removeEventListener('mousemove', splitMove)
@@ -220,6 +221,7 @@ function fid(item: Task) {
 }
 
 .tags-row {
+  display: flex;
   height: 30px;
   overflow-x: auto;
   white-space: nowrap;
