@@ -202,7 +202,7 @@ export function dropOnTag(dragged: Group, target: Group) {
   reparentToLevel(dragged, target)
 }
 
-// 标签被 drop 时的统一入口：拖 group 走层级/排序，拖条目走“追加到最下层”
+// 标签被 drop 时的统一入口：拖 group 走层级/排序，拖条目落到该标签本身
 export function dropOnTagTarget(target: Group) {
   const dragging = itemDragging.value
   if (!dragging) {
@@ -213,16 +213,19 @@ export function dropOnTagTarget(target: Group) {
     dropOnTag(dragging.item as Group, target)
     return
   }
-  appendTaskToGroup(dragging.item as Task, target)
+  addTaskTo(target, dragging.item as Task)
 }
 
-// 需求 7 的“追加”入口：新窗口、拖到标签上都追加到最下层
-export function appendTaskToGroup(task: Task, group: Group) {
-  const target = followSelection(group)
-  if (target.tasks.some(t => taskEqual(t, task))) {
+export function addTaskTo(group: Group, task: Task) {
+  if (group.tasks.some(t => taskEqual(t, task))) {
     return
   }
-  target.tasks.push(task)
+  group.tasks.push(task)
+}
+
+// 需求 7 的“追加”入口：新窗口自动追加到当前选中链最深层的 group
+export function appendTaskToGroup(task: Task, group: Group) {
+  addTaskTo(followSelection(group), task)
 }
 
 // 复制当前组（Ctrl+D）：只复制组本身，下级仍属于原组（克隆子树会让两个组声称同一批下级）

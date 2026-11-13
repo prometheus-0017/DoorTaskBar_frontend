@@ -224,7 +224,13 @@ function fid(item: Task) {
   display: flex;
   height: 30px;
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.tags-row::-webkit-scrollbar {
+  display: none;
 }
 
 .tags-row span {
