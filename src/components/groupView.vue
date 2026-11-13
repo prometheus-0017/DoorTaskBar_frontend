@@ -145,11 +145,15 @@ async function onRightClick(item: Task, event: MouseEvent) {
 function fid(item: Task) {
   return mkFullId(item.id, item.system)
 }
+const compactMode=computed(()=>{
+  const showSearch=active?.value?.searchVisible
+  return !showSearch
+})
 </script>
 
 <template>
   <div class="panel">
-    <div v-if="isWideMode" class="row tags-row" @dragover="dragOverInternal($event)" @drop="dropOnTagList(parent)">
+    <div v-if="isWideMode" class="row tags-row" @dragover="dragOverInternal($event)" @drop="dropOnTagList(parent)" :style="{marginBottom:compactMode?'0px':undefined}">
       <span class="plus" @click="onPlusClick($event)">+</span>
       <span v-for="tag in siblings"
             :key="tag.id"
@@ -164,7 +168,7 @@ function fid(item: Task) {
     </div>
     <div v-else class="row current-tag">{{ active?.name }}</div>
 
-    <div v-if="isWideMode && active?.searchVisible !== false" class="row search-box">
+    <div v-if="isWideMode && active?.searchVisible !== false" class="row search-box" >
       <div class="input-wrapper">
         <input type="text" placeholder="Filter..." :value="searchCursor?.searchQuery ?? ''" @input="onSearchInput" />
         <span v-if="searchCursor?.searchQuery" class="clear-button" @click="clearSearch">×</span>
@@ -173,7 +177,7 @@ function fid(item: Task) {
 
     <div class="body" ref="bodyEl">
       <div class="list-container" ref="listEl" :style="{ flex: listFlex }">
-        <ul class="item-list" :class="{ wide: isWideMode }" @dragover="dragOverInternal($event)" @drop="onGapDrop">
+        <ul class="item-list" :class="{ wide: isWideMode }" @dragover="dragOverInternal($event)" @drop="onGapDrop" :style="{marginBottom:compactMode?'0px':undefined}">
           <li v-for="item in shown"
               :key="fid(item)"
               :class="{ current: taskEqual(currentItemClicked?.item as Task, item) }"
@@ -295,6 +299,7 @@ function fid(item: Task) {
   flex-direction: column;
   border-radius: 5px;
   gap: 4px;
+  margin:0;
 }
 
 .item-list li {
