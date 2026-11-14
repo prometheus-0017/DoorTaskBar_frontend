@@ -90,8 +90,12 @@ def isWindow(hwnd):
     class_name = win32gui.GetClassName(hwnd)
     title = win32gui.GetWindowText(hwnd)
 
-    if class_name in {"#32770", "tooltips_class32"}:
+    if class_name == "tooltips_class32":
         return False
+    # 对话框类窗口默认丢弃，但带 WS_EX_APPWINDOW 的是系统认定要进任务栏的窗口(如 TortoiseGit 各对话框)
+    if class_name == "#32770":
+        if not win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_APPWINDOW:
+            return False
     
     # 确保是顶级窗口（非子窗口）
     root_hwnd = win32gui.GetAncestor(hwnd, win32con.GA_ROOT)
