@@ -1,0 +1,11 @@
+Flask==3.1.2
+Pillow==12.1.0
+pywebview==6.2.1
+pythonnet==3.1.0
+clr-loader==0.3.1
+psutil==5.9.6
+xuri_rpc==0.2.2
+keyboard==0.13.5
+requests==2.32.3
+pywin32==311
+websockets==12.0

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -22,3 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+=======
+/__pycache__
+/dist
+2status.json
+status.json
+.venv
+build/
+>>>>>>> 27be18e326eef49d7992ab894dd6797786cd9c36
