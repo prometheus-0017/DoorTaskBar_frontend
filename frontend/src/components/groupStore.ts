@@ -31,6 +31,9 @@ export function taskEqual(a: Task | null | undefined, b: Task | null | undefined
 export const groups = ref<Group[]>([])
 // 顶层选中的 group id（顶层相当于 parent=null 的那个层级，选中项不持久化）
 export const currentTaskListShowing = ref('main')
+// 最近点过的 group 标签 id：Ctrl+W 这类快捷键要作用于“用户最后点的那个组”，
+// 而不是选中链最深处那一层（那一层往往是切上级时被 subCurrent 自动带出来的）
+export const lastClickedGroup = ref<string | null>(null)
 export const itemDragging: Ref<ItemProxy | null> = ref(null)
 export const currentItemClicked: Ref<ItemProxy | null> = ref(null)
 export const hoverState = reactive<Record<fullId, boolean>>({})
@@ -105,6 +108,17 @@ export function followSelection(g: Group): Group {
     seen.add(next.id)
     cur = next
   }
+}
+
+// 画面上最下面那一层的 group
+export function deepestGroup(): Group | null {
+  const top = currentGroup()
+  return top ? followSelection(top) : null
+}
+
+// 快捷键的目标组：优先用最后点过的标签，没点过或已被删就退到选中链最深层
+export function targetGroup(): Group | null {
+  return findGroup(lastClickedGroup.value) ?? deepestGroup()
 }
 
 export function queryCursorFor(g: Group): Group {
@@ -260,6 +274,10 @@ export function deleteGroupWithRehome(id: string) {
   } else {
     currentTaskListShowing.value = next ? next.id : 'main'
   }
+  // 游标跟着被删组走到同级的下一个，重复按键就在同一层逐个往后删
+  if (lastClickedGroup.value === id) {
+    lastClickedGroup.value = next ? next.id : null
+  }
 }
 
 // 旧 status.json 没有 previous/视图字段，坏数据（自指、指向不存在的 id、成环）在这里自愈
@@ -313,6 +331,7 @@ export function normalizeGroups() {
 
 export function selectTag(parent: Group | null, tag: Group) {
   currentItemClicked.value = { type: 'tag', item: tag }
+  lastClickedGroup.value = tag.id
   setSelectedChild(parent, tag.id)
   for (const item of tag.tasks) {
     const fid = mkFullId(item.id, item.system)

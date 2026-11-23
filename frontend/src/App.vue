@@ -10,7 +10,6 @@ import {
   appendTaskToGroup,
   currentGroup,
   currentItemClicked,
-  currentTaskListShowing,
   deleteGroupWithRehome,
   duplicateGroup,
   getListById,
@@ -21,6 +20,7 @@ import {
   normalizeGroups,
   setTagName,
   setTaskName,
+  targetGroup,
   type ItemProxy,
 } from './components/groupStore'
 import type { Group, Task } from './components/group'
@@ -70,28 +70,29 @@ const applyTheme = (theme: string) => {
   // 如果是 'system'，则不加任何类，让 CSS 的 @media 查询自动接管
 };
 
+// 删除当前所在的 group（Ctrl+W）：与 Ctrl+D 共用 targetGroup，都作用于最后点过的标签，顶层的 main 不可删
 // 复制当前组（Ctrl+D）：复制名称/捕获规则/任务列表，新组插到原组后面并切换过去
 // 只复制组本身：克隆子树会让两个组声称同一批下级，id 引用无法复制
 async function handleKeyDown(e: KeyboardEvent) {
   if (e.key == 'w' && e.ctrlKey) {
-    if (currentTaskListShowing.value == 'main') {
+    const target = targetGroup()
+    if (!target || target.id == 'main') {
       return
     }
-    if (!await confirm('确定要删除吗？')) {
+    if (!await confirm('即将删除 : '+target.name)) {
       return
     }
-    deleteGroupWithRehome(currentTaskListShowing.value)
+    deleteGroupWithRehome(target.id)
   }
   // 复制当前组（Ctrl+D）
   if (e.key == 'd' && e.ctrlKey) {
     e.preventDefault()
-    if (currentTaskListShowing.value == 'main') {
+    const src = targetGroup()
+    // main 是全量窗口列表，复制它没有意义
+    if (!src || src.id == 'main') {
       return
     }
-    const src = currentGroup()
-    if (src) {
-      duplicateGroup(src)
-    }
+    duplicateGroup(src)
   }
   if (e.key === 'F2') {
     const clicked: ItemProxy | null = currentItemClicked.value
